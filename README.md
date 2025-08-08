@@ -1,5 +1,5 @@
 # YuB-X-Public
-This source is a clean v2 of the YuB-X-Low source  
+This executor source is a clean v2 of the YuB-X-Low source  
 ## Included
 - Teleport Handler  
 - sUNC supported  

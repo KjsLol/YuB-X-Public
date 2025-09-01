@@ -9,8 +9,6 @@
 #include "lgc.h"
 #include "ldo.h"
 #include "ldebug.h"
-#include <Roblox/Encryptions.hpp>
-#include <Roblox/Offsets.hpp>
 
 /*
 ** Main thread combines a thread state and the global state
@@ -23,9 +21,6 @@ typedef struct LG
 
 static void stack_init(lua_State* L1, lua_State* L)
 {
-    //if (Offsets::DecryptLuaState != REBASE(0xB44700)) // 0xB25660
-    //    return stack_init(L1, L);
-
     // initialize CallInfo array
     L1->base_ci = luaM_newarray(L, BASIC_CI_SIZE, CallInfo, L1->memcat);
     L1->ci = L1->base_ci;
@@ -114,9 +109,6 @@ static void close_state(lua_State* L)
 
 lua_State* luaE_newthread(lua_State* L)
 {
-    //if (Offsets::Print != REBASE(0x1563AC0) || Offsets::PushInstance != REBASE(0xE7CBC0) || Offsets::GetGlobalStateForInstance != REBASE(0xDA0660))
-    //    return luaE_newthread(L); // Different threads on different updates
-
     lua_State* L1 = luaM_newgco(L, lua_State, sizeof(lua_State), L->activememcat);
     luaC_init(L, L1, LUA_TTHREAD);
     preinit_state(L1, L->global);

@@ -14,8 +14,9 @@
 #include "lbuffer.h"
 
 #include <string.h>
-#include <Roblox/Encryptions.hpp>
-#include <Roblox/Offsets.hpp>
+
+LUAU_DYNAMIC_FASTFLAGVARIABLE(LuauSafeStackCheck, false)
+
 /*
  * This file contains most implementations of core Lua APIs from lua.h.
  *
@@ -99,7 +100,7 @@ static LUAU_NOINLINE TValue* pseudo2addr(lua_State* L, int idx)
     }
 }
 
-TValue* index2addr(lua_State* L, int idx)
+static LUAU_FORCEINLINE TValue* index2addr(lua_State* L, int idx)
 {
     if (idx > 0)
     {
@@ -140,7 +141,36 @@ int lua_checkstack(lua_State* L, int size)
         res = 0; // stack overflow
     else if (size > 0)
     {
-        luaD_checkstack(L, size);
+        if (DFFlag::LuauSafeStackCheck)
+        {
+            if (stacklimitreached(L, size))
+            {
+                struct CallContext
+                {
+                    int size;
+
+                    static void run(lua_State* L, void* ud)
+                    {
+                        CallContext* ctx = (CallContext*)ud;
+
+                        luaD_growstack(L, ctx->size);
+                    }
+                } ctx = {size};
+
+                // there could be no memory to extend the stack
+                if (luaD_rawrunprotected(L, &CallContext::run, &ctx) != LUA_OK)
+                    return 0;
+            }
+            else
+            {
+                condhardstacktests(luaD_reallocstack(L, L->stacksize - EXTRA_STACK, 0));
+            }
+        }
+        else
+        {
+            luaD_checkstack(L, size);
+        }
+
         expandstacklimit(L, L->top + size);
     }
     return res;
@@ -276,7 +306,6 @@ void lua_replace(lua_State* L, int idx)
 
 void lua_pushvalue(lua_State* L, int idx)
 {
-
     luaC_threadbarrier(L);
     StkId o = index2addr(L, idx);
     setobj2s(L, L->top, o);
@@ -1008,8 +1037,9 @@ void lua_call(lua_State* L, int nargs, int nresults)
 /*
 ** Execute a protected call.
 */
+// data to `f_call'
 struct CallS
-{ // data to `f_call'
+{
     StkId func;
     int nresults;
 };
@@ -1039,6 +1069,42 @@ int lua_pcall(lua_State* L, int nargs, int nresults, int errfunc)
     int status = luaD_pcall(L, f_call, &c, savestack(L, c.func), func);
 
     adjustresults(L, nresults);
+    return status;
+}
+
+/*
+** Execute a protected C call.
+*/
+// data to `f_Ccall'
+struct CCallS
+{
+    lua_CFunction func;
+    void* ud;
+};
+
+static void f_Ccall(lua_State* L, void* ud)
+{
+    struct CCallS* c = cast_to(struct CCallS*, ud);
+
+    if (!lua_checkstack(L, 2))
+        luaG_runerror(L, "stack limit");
+
+    lua_pushcclosurek(L, c->func, nullptr, 0, nullptr);
+    lua_pushlightuserdata(L, c->ud);
+    luaD_call(L, L->top - 2, 0);
+}
+
+int lua_cpcall(lua_State* L, lua_CFunction func, void* ud)
+{
+    api_check(L, L->status == 0);
+
+    struct CCallS c;
+    c.func = func;
+    c.ud = ud;
+
+    int status = luaD_pcall(L, f_Ccall, &c, savestack(L, L->top), 0);
+
+    adjustresults(L, 0);
     return status;
 }
 
@@ -1377,28 +1443,6 @@ static const char* aux_upvalue(StkId fi, int n, TValue** val)
     }
 }
 
-const char* aux_upvalue_2(Closure* f, int n, TValue** val)
-{
-    if (f->isC)
-    {
-        if (!(1 <= n && n <= f->nupvalues))
-            return NULL;
-        *val = &f->c.upvals[n - 1];
-        return "";
-    }
-    else
-    {
-        Proto* p = f->l.p;
-        if (!(1 <= n && n <= p->nups)) // not a valid upvalue
-            return NULL;
-        TValue* r = &f->l.uprefs[n - 1];
-        *val = ttisupval(r) ? upvalue(r)->v : r;
-        if (!(1 <= n && n <= p->sizeupvalues)) // don't have a name for this upvalue
-            return "";
-        return getstr(p->upvalues[n - 1]);
-    }
-}
-
 const char* lua_getupvalue(lua_State* L, int funcindex, int n)
 {
     luaC_threadbarrier(L);
@@ -1469,8 +1513,16 @@ void lua_unref(lua_State* L, int ref)
 
     global_State* g = L->global;
     LuaTable* reg = hvalue(registry(L));
-    TValue* slot = luaH_setnum(L, reg, ref);
-    setnvalue(slot, g->registryfree); // NB: no barrier needed because value isn't collectable
+
+    const TValue* slot = luaH_getnum(reg, ref);
+    api_check(L, slot != luaO_nilobject);
+
+    // similar to how 'luaH_setnum' makes non-nil slot value mutable
+    TValue* mutableSlot = (TValue*)slot;
+
+    // NB: no barrier needed because value isn't collectable
+    setnvalue(mutableSlot, g->registryfree);
+
     g->registryfree = ref;
 }
 
@@ -1549,22 +1601,6 @@ void lua_clonefunction(lua_State* L, int idx)
     for (int i = 0; i < cl->nupvalues; ++i)
         setobj2n(L, &newcl->l.uprefs[i], &cl->l.uprefs[i]);
     setclvalue(L, L->top, newcl);
-    api_incr_top(L);
-}
-void lua_clonecfunction(lua_State* L, int idx)
-{
-    luaC_checkGC(L);
-    luaC_threadbarrier(L);
-    Closure* cl = clvalue(index2addr(L, idx));
-    api_checknelems(L, cl->nupvalues);
-    Closure* newcl = luaF_newCclosure(L, cl->nupvalues, cl->env);
-    newcl->c.f = (lua_CFunction)cl->c.f;
-    newcl->c.cont = (lua_Continuation)cl->c.cont;
-    newcl->c.debugname = (const char*)cl->c.debugname;
-    for (int i = 0; i < cl->nupvalues; i++)
-        setobj2n(L, &newcl->c.upvals[i], &cl->c.upvals[i]);
-    setclvalue(L, L->top, newcl);
-    LUAU_ASSERT(iswhite(obj2gco(newcl)));
     api_incr_top(L);
 }
 

@@ -133,7 +133,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir)Dependencies\Luau\Compiler\include;$(ProjectDir)Dependencies\Luau\Common\include;$(ProjectDir)Dependencies\Luau\Ast\include;$(ProjectDir)Dependencies\Luau\VM\include;$(ProjectDir)Dependencies\Luau\VM\src;$(ProjectDir)Dependencies\Luau;$(ProjectDir);$(ProjectDir)Dependencies\cpr\include;$(ProjectDir)Dependencies\curl\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)Dependencies\Luau\Compiler\include;$(ProjectDir)Dependencies\Luau\Common\include;$(ProjectDir)Dependencies\Luau\Ast\include;$(ProjectDir)Dependencies\Luau\VM\include;$(ProjectDir)Dependencies\Luau\VM\src;$(ProjectDir)Dependencies\Luau;$(ProjectDir);$(ProjectDir)Dependencies\cpr\include;$(ProjectDir)Dependencies\curl\include;$(ProjectDir)Dependencies;$(ProjectDir)Dependencies\Zstd\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
@@ -141,7 +141,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
       <AdditionalDependencies>cpr.lib;libcurl_release.lib;Ws2_32.lib;Wldap32.lib;Normaliz.lib;Crypt32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(ProjectDir)Dependencies\curl\lib\;$(ProjectDir)Dependencies\cpr\lib\;$(ProjectDir)Dependencies\cryptopp\lib\;$(ProjectDir)Dependencies\Zstd\lib\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)Dependencies\curl\lib;$(ProjectDir)Dependencies\cpr\lib;$(ProjectDir)Dependencies\cryptopp\lib;$(ProjectDir)Dependencies\Zstd\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

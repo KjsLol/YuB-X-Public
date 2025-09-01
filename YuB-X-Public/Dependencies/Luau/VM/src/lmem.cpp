@@ -206,7 +206,7 @@ const SizeClassConfig kSizeClassConfig;
 #define debugpageset(x) NULL
 #endif
 
-typedef struct lua_Page
+struct lua_Page
 {
     // list of pages with free blocks
     lua_Page* prev;

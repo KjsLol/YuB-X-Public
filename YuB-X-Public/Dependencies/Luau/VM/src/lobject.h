@@ -4,8 +4,9 @@
 
 #include "lua.h"
 #include "lcommon.h"
-#include <Roblox/Encryptions.hpp>
 #include <Roblox/Offsets.hpp>
+#include <Roblox/Encryptions.hpp>
+
 /*
 ** Union of all collectible objects
 */
@@ -325,16 +326,15 @@ typedef struct Proto
 
 
     LUAU_SHUFFLE9(LUAU_SEMICOLON_SEP,
-        int sizecode,     // a1 (AAA - 0x88) / 4 + 1
-        int sizep,        // a2
-        int sizelocvars,  // a3
-        int sizeupvalues, // a4
-        int sizek,        // a5
-        int sizelineinfo, // a6
-        int linegaplog2,  // a7
-        int linedefined,  // a8
-        int bytecodeid);  // a9
-
+        int sizecode,       // a1
+        int sizep,          // a2
+        int sizelocvars,    // a3
+        int sizeupvalues,   // a4
+        int sizek,          // a5
+        int sizelineinfo,   // a6
+        int linegaplog2,    // a7
+        int linedefined,    // a8
+        int bytecodeid);    // a9
     int sizetypeinfo;
 } Proto;
 // clang-format on
@@ -490,11 +490,9 @@ typedef struct LuaTable
 #define twoto(x) ((int)(1 << (x)))
 #define sizenode(t) (twoto((t)->lsizenode))
 
-#define luaO_nilobject (&luaO_nilobject_)
+#define luaO_nilobject reinterpret_cast<TValue*>(Offsets::Luau::LuaO_NilObject)
 
-//LUAI_DATA const TValue luaO_nilobject_;
-
-#define luaO_nilobject (TValue*)Offsets::Luau::LuaO_NilObject
+LUAI_DATA const TValue luaO_nilobject_;
 
 #define ceillog2(x) (luaO_log2((x)-1) + 1)
 

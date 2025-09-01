@@ -2,8 +2,6 @@
 // This code is based on Lua 5.x implementation licensed under MIT License; see lua_LICENSE.txt for details
 #pragma once
 
-#include <Roblox/Encryptions.hpp>
-#include <Roblox/Offsets.hpp>
 // When debugging complex issues, consider enabling one of these:
 // This will reallocate the stack very aggressively at every opportunity; use this with asan to catch stale stack pointers
 // #define HARDSTACKTESTS 1

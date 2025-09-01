@@ -32,21 +32,6 @@ struct RBXExtraSpace
     bool GlobalActorState;
 };
 
-#define lua_pushrawclosure(L, rawClosure) \
-setclvalue(L, L->top, rawClosure); \
-incr_top(L)
-#define luaL_trimstack(L, n) if (lua_gettop(L) > n) lua_settop(L, n)
-#define lua_pushinstance(L, n) Roblox::PushInstance(L, n)
-#define lua_pushgc(L, n) \
-L->top->value.gc = reinterpret_cast<GCObject*>(n); \
-L->top->tt = n->tt; \
-incr_top(L)
-#define lua_torawuserdata(L, n) *static_cast<void**>(lua_touserdata(L, n))
-#define lua_propergetglobal(L, s) \
-    lua_pushgc(L, clvalue((L->ci - 1)->func)->env); \
-    lua_getfield(L, -1, s); \
-    lua_remove(L, -2);
-
 // option for multiple returns in `lua_pcall' and `lua_call'
 #define LUA_MULTRET (-1)
 
@@ -264,6 +249,7 @@ LUA_API int lua_setfenv(lua_State* L, int idx);
 LUA_API int luau_load(lua_State* L, const char* chunkname, const char* data, size_t size, int env);
 LUA_API void lua_call(lua_State* L, int nargs, int nresults);
 LUA_API int lua_pcall(lua_State* L, int nargs, int nresults, int errfunc);
+LUA_API int lua_cpcall(lua_State* L, lua_CFunction func, void* ud);
 
 /*
 ** coroutine functions
@@ -275,7 +261,7 @@ LUA_API int lua_resumeerror(lua_State* L, lua_State* from);
 LUA_API int lua_status(lua_State* L);
 LUA_API int lua_isyieldable(lua_State* L);
 LUA_API void* lua_getthreaddata(lua_State* L);
-LUA_API void lua_setthreaddata(lua_State* L, void* data);
+LUA_API void lua_setthreaddata(lua_State* L, RBXExtraSpace* data);
 LUA_API int lua_costatus(lua_State* L, lua_State* co);
 
 /*
@@ -371,8 +357,6 @@ LUA_API const char* lua_getlightuserdataname(lua_State* L, int tag);
 
 LUA_API void lua_clonefunction(lua_State* L, int idx);
 
-LUA_API void lua_clonecfunction(lua_State* L, int idx);
-
 LUA_API void lua_cleartable(lua_State* L, int idx);
 LUA_API void lua_clonetable(lua_State* L, int idx);
 
@@ -426,13 +410,8 @@ LUA_API void lua_unref(lua_State* L, int ref);
 
 #define lua_tostring(L, i) lua_tolstring(L, (i), NULL)
 
-#define lua_toclosure(L, i) (Closure*)lua_topointer(L, i)
-
 #define lua_pushfstring(L, fmt, ...) lua_pushfstringL(L, fmt, ##__VA_ARGS__)
 
-#define lua_normalisestack(L, mxs) { if (lua_gettop(L) > mxs) lua_settop(L, mxs); }
-#define lua_preparepush(L, psc) lua_rawcheckstack(L, psc)
-#define lua_preparepushcollectable(L, psc) { lua_preparepush(L, psc); luaC_threadbarrier(L); }
 /*
 ** {======================================================================
 ** Debug API

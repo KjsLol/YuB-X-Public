@@ -35,29 +35,28 @@ const char* const luaT_eventname[] = {
     // ORDER TM
     
     LUAU_SHUFFLE7(LUAU_COMMA_SEP,
-    "__index",    // a1
-    "__newindex", // a2
-    "__mode",     // a3
-    "__namecall", // a4
-    "__call",     // a5
-    "__iter",     // a6
-    "__len"),     // a7
+    "__index",
+    "__newindex",
+    "__mode",
+    "__namecall",
+    "__call",
+    "__iter",
+    "__len"),
 
     "__eq",
 
     
     LUAU_SHUFFLE8(LUAU_COMMA_SEP,
-    "__add", // a1
-    "__sub", // a2
-    "__mul", // a3
-    "__div", // a4
-    "__idiv",// a5
-    "__mod", // a6
-    "__pow", // a7
-    "__unm"),// a8
+    "__add",
+    "__sub",
+    "__mul",
+    "__div",
+    "__idiv",
+    "__mod",
+    "__pow",
+    "__unm"),
 
     
-
     LUAU_SHUFFLE5(LUAU_COMMA_SEP,
     "__lt",
     "__le",

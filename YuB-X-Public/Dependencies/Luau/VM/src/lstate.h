@@ -5,7 +5,6 @@
 #include "lobject.h"
 #include "ltm.h"
 #include <Roblox/Encryptions.hpp>
-#include <Roblox/Offsets.hpp>
 
 // registry
 #define registry(L) (&L->global->registry)
@@ -20,10 +19,11 @@
 // clang-format off
 typedef struct stringtable
 {
+
     LUAU_SHUFFLE3(LUAU_SEMICOLON_SEP,
-    TString** hash,
-    uint32_t nuse, // number of elements
-    int size);
+        TString** hash,
+        uint32_t nuse, // number of elements
+        int size);
 } stringtable;
 // clang-format on
 
@@ -58,11 +58,12 @@ typedef struct stringtable
 // clang-format off
 typedef struct CallInfo
 {
+
     LUAU_SHUFFLE4(LUAU_SEMICOLON_SEP,
-        StkId base,    // base for this function
-        StkId func,    // function index in the stack
-        StkId top,     // top for this function
-        const Instruction* savedpc);
+        StkId base,    // base for this function          // a1, offset 0
+        StkId func,    // function index in the stack     // a4, offset 8
+        StkId top,     // top for this function           // a2, offset 16
+        const Instruction* savedpc);                      // a3, offset 24
 
     int nresults;       // expected number of results from this function
     unsigned int flags; // call frame flags, see LUA_CALLINFO_*
@@ -177,10 +178,12 @@ typedef struct global_State
     uint8_t currentwhite;
     uint8_t gcstate; // state of garbage collector
 
+
     LUAU_SHUFFLE3(LUAU_SEMICOLON_SEP,
         GCObject* gray,      // list of gray objects
         GCObject* grayagain, // list of objects to be traversed atomically
         GCObject* weak);     // list of weak tables (to be cleared)
+
 
     LUAU_SHUFFLE5(LUAU_SEMICOLON_SEP,
         size_t GCthreshold,                       // when totalbytes > GCthreshold, run GC step
@@ -253,7 +256,7 @@ struct lua_State
         LSTATE_GLOBAL_ENC<global_State*> global,
         CallInfo* ci,                                     // call info for current function
         StkId stack_last,                                 // last free slot in the stack
-        StkId stack);                                     // stack base
+        StkId stack);                                    // stack base
 
 
     CallInfo* end_ci;                          // points after end of ci array
@@ -269,11 +272,11 @@ struct lua_State
 
     int cachedslot;    // when table operations or INDEX/NEWINDEX is invoked from Luau, what is the expected slot for lookup?
 
+
     LUAU_SHUFFLE3(LUAU_SEMICOLON_SEP,
         LuaTable* gt,           // table of globals
         UpVal* openupval,    // list of open upvalues in this stack
         GCObject* gclist);
-
 
     TString* namecall; // when invoked from Luau using NAMECALL, what method do we need to invoke?
 
